@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+
+  <!-- Plantilla principal -->
+  <xsl:template match="/">
+    <html lang="es">
+      <head>
+        <meta charset="UTF-8"/>
+        <title>Participantes</title>
+        <link rel="stylesheet" href="estilos.css"/>
+      </head>
+      <body>
+        <!-- Encabezado -->
+        <div class="header">
+          <h1>Información del concurso</h1>
+        </div>
+
+        <main>
+          <!-- Título del listado de participantes -->
+          <h2>Listado de Participantes</h2>
+          <!-- Lista ordenada de participantes -->
+          <ol class="participantes">
+            <!-- Aplicar la plantilla a los nodos 'participante' dentro del nodo 'concurso' -->
+            <xsl:apply-templates select="concurso/participante"/>
+          </ol>
+
+          <!-- Título de los mejores participantes con más de 20 puntos -->
+          <h2>5 - Mejores participantes con más de 20 puntos</h2>
+          <!-- Tabla de los participantes con más de 20 puntos -->
+          <table class="participantes-t ancho">
+            <thead>
+              <tr>
+                <th>Posición</th>
+                <th>Participante</th>
+                <th>Puntos</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Aplicar la plantilla a los nodos 'participante' con puntos > 20, ordenados por puntos de forma descendente -->
+              <xsl:apply-templates select="concurso/participante[puntos > 20]">
+                <xsl:sort select="puntos" order="descending"/>
+              </xsl:apply-templates>
+            </tbody>
+          </table>
+
+          <!-- Estadísticas -->
+          <div class="estad">
+            <h2>Estadísticas</h2>
+            <ul>
+              <!-- Número total de participantes -->
+              <li><span>Número total de participantes:</span> <span class="stats"><xsl:value-of select="count(concurso/participante)"/></span></li>
+              <!-- Puntuación media -->
+              <li><span>Puntuación media:</span> <span class="stats"><xsl:value-of select="sum(concurso/participante/puntos) div count(concurso/participante)"/></span></li>
+              <!-- Participantes de 18 a 35 años -->
+              <li><span>Participantes de 18 a 35 años:</span> <span class="stats"><xsl:value-of select="count(concurso/participante[edad &gt;= 18 and edad &lt;= 35])"/> (<xsl:value-of select="format-number((count(concurso/participante[edad &gt;= 18 and edad &lt;= 35]) div count(concurso/participante)) * 100, '0.00')"/>%)</span></li>
+              <!-- Participantes de 36 a 55 años -->
+              <li><span>Participantes de 36 a 55 años:</span> <span class="stats"><xsl:value-of select="count(concurso/participante[edad &gt; 35 and edad &lt;= 55])"/> (<xsl:value-of select="format-number((count(concurso/participante[edad &gt; 35 and edad &lt;= 55]) div count(concurso/participante)) * 100, '0.00')"/>%)</span></li>
+              <!-- Participantes de más de 55 años -->
+              <li><span>Participantes de más de 55 años:</span> <span class="stats"><xsl:value-of select="count(concurso/participante[edad &gt; 55])"/> (<xsl:value-of select="format-number((count(concurso/participante[edad &gt; 55]) div count(concurso/participante)) * 100, '0.00')"/>%)</span></li>
+            </ul>
+
+            <!-- Tabla de participantes por provincia -->
+            <table class="participantes-t">
+              <thead>
+                <tr>
+                  <th>Provincia</th>
+                  <th>Nº Participantes</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Iterar sobre los participantes -->
+                <xsl:for-each select="concurso/participante">
+                  <!-- Ordenar los participantes por provincia -->
+                  <xsl:sort select="provincia"/>
+                  <!-- Mostrar solo la primera aparición de cada provincia -->
+                  <xsl:if test="position() = 1 or provincia != preceding-sibling::participante[1]/provincia">
+                    <tr>
+                      <!-- Mostrar la provincia -->
+                      <td><xsl:value-of select="provincia"/></td>
+                      <!-- Contar los participantes de la misma provincia -->
+                      <td><xsl:value-of select="count(../participante[provincia = current()/provincia])"/></td>
+                    </tr>
+                  </xsl:if>
+                </xsl:for-each>
+              </tbody>
+            </table>
+          </div>
+        </main>
+        <!-- Pie de página -->
+        <footer>
+          <p>P.Lluyot - 2023</p>
+        </footer>
+      </body>
+    </html>
+  </xsl:template>
+
+  <!-- Plantilla para los nodos 'participante' -->
+  <xsl:template match="concurso/participante">
+    <!-- Mostrar cada participante como un elemento de lista -->
+    <li><xsl:value-of select="concat(apellidos, ', ', nombre, ' (', @codigo, ') - ', puntos, ' puntos')"/></li>
+  </xsl:template>
+
+  <!-- Plantilla para los nodos 'participante' con puntos > 20 -->
+  <xsl:template match="concurso/participante[puntos &gt; 20]">
+    <tr>
+      <!-- Mostrar la posición del participante -->
+      <td><xsl:number count="concurso/participante[puntos &gt; 20]"/></td>
+      <!-- Mostrar el nombre y apellidos del participante -->
+      <td><xsl:value-of select="concat(apellidos, ', ', nombre)"/></td>
+      <!-- Mostrar los puntos del participante -->
+      <td><xsl:value-of select="puntos"/></td>
+    </tr>
+  </xsl:template>
+
+</xsl:stylesheet>
